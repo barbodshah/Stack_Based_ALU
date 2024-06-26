@@ -1,6 +1,6 @@
 
 # Stack Based ALU
-The project is a Stack Based ALU capable of calculating simple mathematical expressions containing addition, multiplication, negative and positive numbers and paranthesis.
+The project is a Stack Based ALU capable of calculating simple mathematical expressions containing addition, multiplication, negative and positive numbers and paranthesis
 
 
 ## Tools
