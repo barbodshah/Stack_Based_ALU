@@ -6,7 +6,7 @@ This project implements a stack-based Arithmetic Logic Unit (ALU) in Verilog tha
 ## Table of Contents
 - [Tools](#tools)
 - [Implementation Details](#implementation-details)
-- [How to run](#how-to-rum)
+- [How to run](#how-to-run)
 - [Authors](#authors)
 
 ## Tools
