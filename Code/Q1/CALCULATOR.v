@@ -53,77 +53,71 @@ module CALCULATOR #(parameter LEN_INPUT = 10) (
             for (i = LEN_INPUT; i > 0; i = i - 1)
             begin
                 is_valid_character(expression[8*i-1 -: 8], valid);
+
                 if (valid) begin
                     append_to_postfix(expression[8*i-1 -: 8], postfix, index);
                 end
                 else begin
-                    case (expression[8*i-1 -: 8]) 
-                        "*": begin
-                            append_to_postfix(" ", postfix, index);
+                    if(expression[8*i-1 -: 8] == "*") begin
+                        append_to_postfix(" ", postfix, index);
 
-                            for (j = 1 - (|sp) + 1; j < 1; j = j + 1) begin
-                                stackOp = 3'b111; #1; CLK = 1; #1; CLK = 0;
-                                
-                                if (stackOutput[7:0] == "(" || stackOutput[7:0] == "+") begin
-                                    stackOp = 3'b110; stackInput[7:0] = stackOutput[7:0]; #1; CLK = 1;  #1; CLK = 0;
-                                end else if (stackOutput[7:0] == "*") begin
-                                    append_to_postfix(stackOutput[7:0], postfix, index);
-                                    j = 0 - (|sp);
-                                end
-                            end
-                            stackOp = 3'b110; stackInput[7:0] = "*"; #1; CLK = 1; #1; CLK = 0;
-                        end
-
-                        "+": begin
-                            append_to_postfix(" ", postfix, index);
-
-                            for (j = 1 - (|sp); j < 1; j = j + 1) begin
-                                stackOp = 3'b111; #1; CLK = 1; #1; CLK = 0;
-
-                                if (stackOutput[7:0] == "(") begin
-                                    stackOp = 3'b110; stackInput[7:0] = stackOutput[7:0]; #1; CLK = 1; #1; CLK = 0;
-                                end else if (stackOutput[7:0] == "*" || stackOutput[7:0] == "+") begin
-                                    append_to_postfix(stackOutput[7:0], postfix, index);
-                                    j = 0 - (|sp);
-                                end
-                            end
-                            stackOp = 3'b110; stackInput[7:0] = "+"; #1; CLK = 1; #1; CLK = 0;
-                        end
-
-                        ")": begin
-                            append_to_postfix(" ", postfix, index);
-
-                            for (j = 0; j < 1; j = j + 1) begin
-                                stackOp = 3'b111; #1; CLK = 1; #1; CLK = 0;
-
-                                if (stackOutput[7:0] != "(") begin
-                                    append_to_postfix(stackOutput[7:0], postfix, index);
-                                    j = j - 1;
-                                end
+                        for (j = 1 - (|sp); j < 1; j = j + 1) begin
+                            stackOp = 3'b111; #1; CLK = 1; #1; CLK = 0;
+                            
+                            if (stackOutput[7:0] == "(" || stackOutput[7:0] == "+") begin
+                                stackOp = 3'b110; stackInput[7:0] = stackOutput[7:0]; #1; CLK = 1;  #1; CLK = 0;
+                            end else if (stackOutput[7:0] == "*") begin
+                                append_to_postfix(stackOutput[7:0], postfix, index);
+                                j = -(|sp);
                             end
                         end
+                        stackOp = 3'b110; stackInput[7:0] = "*"; #1; CLK = 1; #1; CLK = 0;
+                    end
 
-                        "(": begin
-                            stackOp = 3'b110; stackInput[7:0] = "("; #1; CLK = 1; #1; CLK = 0;
+                    else if(expression[8*i-1 -:8] == "+") begin
+                        append_to_postfix(" ", postfix, index);
+
+                        for (j = 1 - (|sp); j < 1; j = j + 1) begin
+                            stackOp = 3'b111; #1; CLK = 1; #1; CLK = 0;
+
+                            if (stackOutput[7:0] == "(") begin
+                                stackOp = 3'b110; stackInput[7:0] = stackOutput[7:0]; #1; CLK = 1; #1; CLK = 0;
+                            end else if (stackOutput[7:0] == "*" || stackOutput[7:0] == "+") begin
+                                append_to_postfix(stackOutput[7:0], postfix, index);
+                                j = -(|sp);
+                            end
                         end
+                        stackOp = 3'b110; stackInput[7:0] = "+"; #1; CLK = 1; #1; CLK = 0;
+                    end
 
-                        default: begin
+                    else if(expression[8*i-1 -:8] == "(") begin
+                        stackOp = 3'b110; stackInput[7:0] = "("; #1; CLK = 1; #1; CLK = 0;
+                    end
+
+                    else if(expression[8*i-1 -:8] == ")") begin
+                        append_to_postfix(" ", postfix, index);
+
+                        for (j = 0; j < 1; j = j + 1) begin
+                            stackOp = 3'b111; #1; CLK = 1; #1; CLK = 0;
+
+                            if (stackOutput[7:0] != "(") begin
+                                append_to_postfix(stackOutput[7:0], postfix, index);
+                                j = j - 1;
+                            end
                         end
+                    end
 
-                    endcase
                 end
             end
             append_to_postfix(" ", postfix, index);
 
             //pop all stack elements
-            for (j = 1 - (|sp); j < 1; j = j + 1) begin
+            while((|sp) != 0) begin
                 stackOp = 3'b111; #1; CLK = 1; #1; CLK = 0;
                 append_to_postfix(stackOutput[7:0], postfix, index);
-                j = 0 - (|sp);
             end
 
             $display("postfix expression: %s", postfix);
-
             calculator_input = 0;
 
             for (i = 1; i <= 4*LEN_INPUT + 1; i = i + 1) begin
@@ -134,14 +128,11 @@ module CALCULATOR #(parameter LEN_INPUT = 10) (
                     if(isNeg) 
                         i = i + 1;
 
-                    for (j = 0; j < 1; j = j + 1) begin
+                    while(postfix[8*i-1 -: 8] != " ") begin
                         calculator_input = calculator_input * 10 + (postfix[8*i-1 -: 8] - "0");
                         i = i + 1;
-                        if (postfix[8*i-1 -: 8] == " ") begin
-                            j=0;
-                        end
-                        else begin j=-1; end
-                    end 
+                    end
+
                     i = i - 1;
 
                     if(isNeg)
@@ -192,5 +183,3 @@ module CALCULATOR #(parameter LEN_INPUT = 10) (
     endtask
 
 endmodule
-
-
